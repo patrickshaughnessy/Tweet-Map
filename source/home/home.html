@@ -8,38 +8,83 @@
     <div class="col-xs-12" ng-show="authData">
 
       <button class="btn btn-default" ng-click="logout()">Logout</button>
-      <h1>{{greet}}, {{authData.twitter.displayName}}</h1>
+      <h1>Welcome {{authData.twitter.displayName}}!</h1>
+      <h3>Your location: {{profileLoc}}</h3>
 
-      <h3>Find tweets near {{profileLoc}}</h3>
-
-      <div class="col-xs-4 col-xs-offset-4">
-        <div class="input-group">
-          <span class="input-group-addon" id="basic-addon1">#</span>
-          <input ng-model="tag" type="text" class="form-control" placeholder="hashtag" aria-describedby="basic-addon1">
+      <div class="col-xs-12 inputFormArea">
+        <div class="row">
+          <form ng-if='!streaming'>
+            <div class="col-xs-4">
+                <div class="input-group">
+                  <span class="input-group-addon" id="basic-addon1">#</span>
+                  <input ng-model="tag" type="text" class="form-control" placeholder="hashtag or search term" aria-describedby="basic-addon1">
+                </div>
+            </div>
+            <div class="col-xs-4">
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox" ng-model="$parent.noLocation">
+                  Include tweets without locations
+                </label>
+              </div>
+            </div>
+            <div class="col-xs-4" ng-if="tag.length">
+              <button class="btn btn-success" ng-click="getTweets(tag)">Start the feed</button>
+            </div>
+            <div class="col-xs-4" ng-if="!tag.length">
+              <h4>Please enter a search term</h4>
+            </div>
+          </form>
+          <div class="col-xs-12 streamingTitle" ng-if="streaming">
+            <h1>Now searching for: {{tag}}</h1>
+            <button class="btn btn-danger btn-lg" ng-click="stopTweets()">Stop the feed</button>
+          </div>
         </div>
-        <button class="btn btn-primary" ng-click="getTweets(tag)">Go</button>
       </div>
 
-      <div class="col-xs-6">
-        <div class="col-xs-12" ng-class='{red:hover}' ng-mouseover='hover=true' ng-mouseleave='hover=false' ng-repeat="tweet in tweets track by $index" ng-if="tweets.length">
-          <a href="#" ng-click="openInfoWindow($event, markers[$index])">
-            {{markers[$index].title}} -- {{tweet.text}}
-          </a>
-        </div>
-        <!-- <div class='col-xs-6' ng-repeat="marker in markers | orderBy : 'title'">
-          <a href="#" ng-click="openInfoWindow($event, marker)">{{marker.title}}</a>
-        </div> -->
-        <div class="col-xs-12" ng-if="!tweets.length">Waiting for tweets</div>
-      </div>
-
-      <div class='col-xs-6'>
+      <div class='col-xs-12'>
         <div id="map"></div>
+      </div>
 
+      <div class="col-xs-12 imagesArea">
+        <div class="row">
+          <h1>Images</h1>
+          <h2>Click on the link to see each user profile (opens in a new tab)</h2>
+          <div class="col-xs-12" ng-if="!noLocation">
+            <h3>Click a an image to see its location on the map</h3>
+            <div class="picture12" ng-class='{red:hover}' ng-mouseover='hover=true' ng-mouseleave='hover=false' ng-repeat="tweet in tweets track by $index">
+              <a href="https://twitter.com/{{tweet.user.screen_name}}" target="_blank">
+                <h5>{{tweet.user.screen_name}}</h5>
+              </a>
+              <a href="#" ng-click="openInfoWindow($event, markers[$index])">
+                <img ng-src="{{tweet.entities.media[0].media_url}}" alt="">
+              </a>
+            </div>
+          </div>
 
+          <div class="col-xs-6" ng-if="noLocation">
+            <h3>Click a an image to see its location on the map</h3>
+            <div class="picture6" ng-class='{red:hover}' ng-mouseover='hover=true' ng-mouseleave='hover=false' ng-repeat="tweet in tweets track by $index">
+              <a href="https://twitter.com/{{tweet.user.screen_name}}" target="_blank">
+                <h5>{{tweet.user.screen_name}}</h5>
+              </a>
+              <a href="#" ng-click="openInfoWindow($event, markers[$index])">
+                <img ng-src="{{tweet.entities.media[0].media_url}}" alt="">
+              </a>
+            </div>
+          </div>
 
-      <!-- <script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB5yR5w-SUhH3V4kShAzrsBfxugQHIHgQA&callback=initMap">
-      </script> -->
+          <div class="col-xs-6" ng-if="noLocation">
+            <h3>No locations on these, but you can still check out their profile</h3>
+            <div class="picture6" ng-class='{red:hover}' ng-mouseover='hover=true' ng-mouseleave='hover=false' ng-repeat="tweet in tweetsNoLocation track by $index" ng-if="$parent.noLocation">
+              <img ng-src="{{tweet.entities.media[0].media_url}}" alt="">
+              <a href="https://twitter.com/{{tweet.user.screen_name}}" target="_blank">
+                <h5>{{tweet.user.screen_name}}</h5>
+              </a>
+            </div>
+          </div>
+
+        </div>
       </div>
 
     </div>

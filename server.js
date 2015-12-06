@@ -5,7 +5,9 @@ var PORT = process.env.PORT || 3000;
 var express = require('express');
 var bodyParser = require('body-parser');
 var morgan = require('morgan');
-var Twitter = require('twitter');
+// var Twitter = require('twitter');
+var Twitter = require('twit');
+
 
 var app = express();
 
@@ -38,6 +40,9 @@ var io = require('socket.io')(server);
 
 io.on('connection', function (socket) {
   // listen for start of feed
+
+  var stream;
+
   socket.on('startFeed', function (data) {
     console.log('insidesocket', data);
 
@@ -45,30 +50,27 @@ io.on('connection', function (socket) {
     var client = new Twitter({
       consumer_key: process.env.TWITTER_HTHM_KEY,
       consumer_secret: process.env.TWITTER_HTHM_SECRET,
-      access_token_key: process.env.TWITTER_HTHM_TOKEN,
+      access_token: process.env.TWITTER_HTHM_TOKEN,
       access_token_secret: process.env.TWITTER_HTHM_TOKEN_SECRET
     });
 
-    var boundingBox = `${data.location.lng - 0.65}, ${data.location.lat - 0.65}, ${data.location.lng + 0.65}, ${data.location.lat + 0.65}`
-    console.log(boundingBox);
+    stream = client.stream('statuses/filter', {track: data.tag});
 
-    client.stream('statuses/filter', {locations: boundingBox}, function(stream) {
-
-        stream.on('data', function(tweet) {
-          var regex = new RegExp(data.tag, 'gi');
-          if (tweet.text.match(regex)){
-            console.log(tweet);
-            socket.emit('tweet', tweet);
-          }
-        });
-        stream.on('error', function(error) {
-          console.log(error);
-          // throw error;
-        });
-
-    });
-
+    stream.on('tweet', function(tweet){
+      console.log(tweet);
+      if (tweet.entities.media){
+        if (tweet.place || tweet.user.location){
+          socket.emit('tweet', tweet);
+        } else {
+          socket.emit('tweetNoLocation', tweet);
+        }
+      }
+    })
   });
+
+  socket.on('stopFeed', function(){
+    stream.stop();
+  })
 });
 
 
